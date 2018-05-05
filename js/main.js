@@ -21,11 +21,6 @@ const _MINIMUM_TARGET = 2**16;
 const _MINIMUM_TARGET_BN = new Eth.BN(_MINIMUM_TARGET);
 const _ZERO_BN = new Eth.BN(0, 10);
 
-/* these globals are written to once the values are loaded, and used by the mining calculator */
-var current_diff_saved = 0;
-var next_diff_saved = 0;
-var saved_current_block_reward = 0;
-
 /* colors used by pool names. todo: move to css, still use them for chart.js */
 var pool_colors = {
   orange      : "#C64500",
@@ -76,10 +71,6 @@ function goToURLAnchor() {
   }else if (window.location.hash.search('#blocks') != -1) {
     var targetOffset = $('#row-blocks').offset().top;
     $('html, body').animate({scrollTop: targetOffset}, 500);
-  }else if (window.location.hash.search('#miningcalculator') != -1) {
-    // not necessary; calc is at top of screen
-    //var targetOffset = $('#row-miningcalculator').offset().top;
-    //$('html, body').animate({scrollTop: targetOffset}, 500);
   }
 }
 
