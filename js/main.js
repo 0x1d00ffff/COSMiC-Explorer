@@ -75,56 +75,6 @@ function goToURLAnchor() {
 }
 
 
-function calculateNewMiningDifficulty(current_difficulty, 
-                                      eth_blocks_since_last_difficulty_period,
-                                      epochs_mined) {
-  var current_mining_target = _MAXIMUM_TARGET_BN.div(new Eth.BN(current_difficulty));
-  var eth_blocks_since_last_difficulty_period = new Eth.BN(eth_blocks_since_last_difficulty_period);
-  var epochs_mined = new Eth.BN(epochs_mined);
-
-  var target_eth_blocks_since_last_difficulty_period = epochs_mined.mul(new Eth.BN(60));
-
-  if (target_eth_blocks_since_last_difficulty_period == 0) {
-    return 0;
-  }
-
-  if(eth_blocks_since_last_difficulty_period.lt(target_eth_blocks_since_last_difficulty_period)) {
-    //console.log('harder');
-    var excess_block_pct = (target_eth_blocks_since_last_difficulty_period.mul(new Eth.BN(100))).div( eth_blocks_since_last_difficulty_period );
-    var excess_block_pct_extra = excess_block_pct.sub(new Eth.BN(100));
-    if (excess_block_pct_extra.gt(new Eth.BN(1000))) {
-      excess_block_pct_extra = new Eth.BN(1000); 
-    }
-    // If there were 5% more blocks mined than expected then this is 5.  If there were 100% more blocks mined than expected then this is 100.
-    //make it harder
-    var new_mining_target = current_mining_target.sub(current_mining_target.div(new Eth.BN(2000)).mul(excess_block_pct_extra));   //by up to 50 %
-  }else{
-    //console.log('easier');
-    var shortage_block_pct = (eth_blocks_since_last_difficulty_period.mul(new Eth.BN(100))).div( target_eth_blocks_since_last_difficulty_period );
-    var shortage_block_pct_extra = shortage_block_pct.sub(new Eth.BN(100));
-    if (shortage_block_pct_extra.gt(new Eth.BN(1000))) {
-      shortage_block_pct_extra = new Eth.BN(1000); //always between 0 and 1000
-    }
-    //make it easier
-    var new_mining_target = current_mining_target.add(current_mining_target.div(new Eth.BN(2000)).mul(shortage_block_pct_extra));   //by up to 50 %
-  }
-
-  /* never gunna happen, probably. */
-  if(new_mining_target.lt(_MINIMUM_TARGET_BN)) //very difficult
-  {
-    //console.log('hit minimum');
-    new_mining_target = _MINIMUM_TARGET_BN;
-  }
-  if(new_mining_target.gt(_MAXIMUM_TARGET_BN)) //very easy
-  {
-    //console.log('hit maximum');
-    new_mining_target = _MAXIMUM_TARGET_BN;
-  }
-
-  /* return difficulty as an integer */
-  return parseInt(_MAXIMUM_TARGET_BN.div(new_mining_target).toString(10));
-}
-
 /* move fetching/storing stats into a class, even just to wrap it */
 stats = [
   /*Description                     promise which retuns, or null         units         multiplier  null: filled in later*/
@@ -285,10 +235,6 @@ function sleep(ms) {
 function updateStatsThatHaveDependencies(stats) {
   /* estimated hashrate */
   difficulty = getValueFromStats('Mining Difficulty', stats)
-  if(mining_calculator_app) {
-    mining_calculator_app.setCurrentDifficulty(difficulty);
-    mining_calculator_app.useCurrentDiff();
-  }
   //hashrate = difficulty * 2**22 / 600
   //hashrate /= 1000000000
   //el('#EstimatedHashrate').innerHTML = "<b>" + hashrate.toFixed(2) + "</b> Gh/s";
@@ -297,9 +243,6 @@ function updateStatsThatHaveDependencies(stats) {
   max_supply_for_era = getValueFromStats('Max Supply for Current Era', stats)
   current_supply = getValueFromStats('Tokens Minted', stats)
   current_reward = getValueFromStats('Current Mining Reward', stats)
-  if(mining_calculator_app) {
-    mining_calculator_app.setBlockReward(current_reward);
-  }
   supply_remaining_in_era = max_supply_for_era - current_supply; /* TODO: probably need to round to current mining reward */
   rewards_blocks_remaining_in_era = supply_remaining_in_era / current_reward;
   el_safe('#SupplyRemaininginEra').innerHTML = "<b>" + supply_remaining_in_era.toLocaleString() + "</b> 0xBTC <span style='font-size:0.8em;'>(" + rewards_blocks_remaining_in_era + " blocks)</span>";
@@ -330,15 +273,6 @@ function updateStatsThatHaveDependencies(stats) {
   /* add a time estimate to RewardsUntilReadjustment */
   el_safe('#RewardsUntilReadjustment').innerHTML += "  <span style='font-size:0.8em;'>(~" + secondsToReadableTime(rewards_left*minutes_per_reward*60) + ")</span>";
 
-  /* calculate next difficulty */
-  //var current_mining_target = getValueFromStats('Mining Target', stats);
-  var new_mining_target = calculateNewMiningDifficulty(difficulty,
-                                                       eth_blocks_since_last_difficulty_period,
-                                                       rewards_since_readjustment);
-  el_safe('#MiningDifficulty').innerHTML += "  <span style='font-size:0.8em;'>(next: ~" + new_mining_target.toLocaleString() + ")</span>";
-  if(mining_calculator_app) {
-    mining_calculator_app.setNextDifficulty(new_mining_target);
-  }
   /* estimated hashrate */
   //difficulty = getValueFromStats('Mining Difficulty', stats)
   hashrate = difficulty * 2**22 / 600
@@ -480,7 +414,7 @@ function updateAllMinerInfo(eth, stats, hours_into_past){
     address: '0xB6eD7644C69416d67B522e20bC294A9a9B405B31',
     topics: ['0xcf6fbb9dcea7d07263ab4f5c3a92f53af33dffc421d9d121e1c74b307e68189d', null],
   })
-  .then((result) => {
+  .then(async function(result) {
     /* array of all miner addresses */
     var miner_list = [];
     /* array of arrays of type [eth_block, txhash, miner_addr] */
@@ -492,13 +426,24 @@ function updateAllMinerInfo(eth, stats, hours_into_past){
 
     log("got filter results:", total_block_count, "transactions");
 
-    result.forEach(function(transaction){
+    result.forEach(async function(transaction){
       function getMinerAddressFromTopic(address_from_topic) {
         return '0x' + address_from_topic.substr(26, 41);
       }
       var tx_hash = transaction['transactionHash'];
       var block_number = parseInt(transaction['blockNumber'].toString());
       var miner_address = getMinerAddressFromTopic(transaction['topics'][1].toString());
+
+      console.log(transaction);
+
+      eth.getTransactionByHash(tx_hash)
+      .then(async function(result){
+        nonce = result['input'].substr(2, 72);
+        log('tx_hash', tx_hash)
+        log('  nonce', nonce);
+
+        mined_blocks.push([block_number, tx_hash, miner_address, nonce])
+      });
 
       // log('tx_hash=', tx_hash);
       // log('  block=', block_number);
@@ -508,7 +453,6 @@ function updateAllMinerInfo(eth, stats, hours_into_past){
         miner_list.push(miner_address);
       }
 
-      mined_blocks.push([block_number, tx_hash, miner_address])
 
       if(miner_block_count[miner_address] === undefined) {
         miner_block_count[miner_address] = 1;
@@ -516,6 +460,11 @@ function updateAllMinerInfo(eth, stats, hours_into_past){
         miner_block_count[miner_address] += 1;
       }
     });
+
+    while(mined_blocks.length < result.length) {
+      log('waiting...', mined_blocks.length, '!=', result.length)
+      await sleep(500);
+    }
 
     log("processed blocks:",
       Object.keys(miner_block_count).length,
