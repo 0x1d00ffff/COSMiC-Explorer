@@ -6,9 +6,9 @@ function addToURL(value){
   }
 }
 
-const version = "v0.0.10";
+const version = "v0.0.1";
 
-log('0xBitcoin Stats', version);
+log('COSMiC Explorer', version);
 el('#footerversion').innerHTML = version;
 
 var stats_updated_count = 0;
