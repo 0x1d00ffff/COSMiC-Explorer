@@ -14,13 +14,8 @@ Attributions:
     <meta charset='utf-8'>
     <!-- jquery is here because scripts need it early on. may want to move other js imports here. -->
     <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-    <!-- jqMath allows for real equation formatting -->
-    <script src="js/jqmath-etc-0.4.6.min.js" charset="utf-8"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue"></script>
-    <!-- note: lodash is only used for _.debounce() -->
-    <script src="https://unpkg.com/lodash@4.16.0"></script>
-    <script src="js/tipr.min.js"></script>
 
 
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.2.3/milligram.min.css">
@@ -98,24 +93,6 @@ Attributions:
           </div>
         </div>
       </div>
-      <div style="display:none;" id="row-miners">
-        <div class="row">
-          <div class="column"><h4 class="add-top-padding"><a name="miners"></a>Block distribution since last retarget</h4></div>
-        </div>
-        <div class="row">
-          <div class="column column-25" style="max-width:30rem;">
-            <div id="blockdistributionpiechart"></div>
-          </div>
-          <div class="column">
-            <table>
-              <!--<thead id="minerstats"> <tr> <th> </th> <th> </th> </tr> </thead>-->
-              <tbody id="minerstats">
-                <tr><td colspan="3">Loading info from the blockchain...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
       <div style="display:none;" id="row-blocks">
         <div class="row">
           <div class="column"><h4 class="add-top-padding"><a name="blocks"></a>Blocks solved since last retarget</h4></div>
@@ -186,12 +163,6 @@ Attributions:
       try {
         $(document).ready(function() {
            log("DOMready");
-          /* initialize tipr tooltips */
-          $('.tip').tipr({
-              'speed': 800,
-              //'mode': 'above',
-              //'space': 500
-          });
         });
       } catch (err) {
         log('failed to set DOMready fn. Jquery load error?');
