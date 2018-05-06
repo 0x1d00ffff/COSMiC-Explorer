@@ -28,7 +28,7 @@ Attributions:
     <link rel="stylesheet" type="text/css" href="css/ionicons.css">
 
     <!--<link rel="stylesheet" type="text/css" href="/css/dark_custom.css">-->
-    <title>COSMiX Explorer</title>
+    <title>COSMiC Explorer</title>
     <meta name="descripton" content="Explorer for information embedded in 0xBitcoin nonces.">
   </head>
   <body>
@@ -68,10 +68,8 @@ Attributions:
       <div class="row">
         <div class="column">
           <ul id="navigation" class="nav">
-            <li class="nav"><a href="./?page=stats&#"><i class="icon ion-ios-pulse navicon"></i> stats</a></li>
-            <li class="nav"><a href="./?page=stats&#miners"><i class="icon ion-ios-people-outline navicon"></i> miners</a></li>
+            <!--<li class="nav"><a href="./?page=stats&#"><i class="icon ion-ios-pulse navicon"></i> stats</a></li>-->
             <li class="nav"><a href="./?page=stats&#blocks"><i class="icon ion-ios-browsers-outline navicon"></i> blocks</a></li>
-
             <li class="nav"><a href="./?page=graphs&#"><i class="icon ion-ios-flame-outline navicon"></i> difficulty / hashrate</a></li>
             <li class="nav"><a href="./?page=graphs&#reward-time"><i class="icon ion-ios-speedometer-outline navicon"></i> reward time / supply</a></li>
           </ul>
@@ -95,7 +93,7 @@ Attributions:
       </div>
       <div style="display:none;" id="row-blocks">
         <div class="row">
-          <div class="column"><h4 class="add-top-padding"><a name="blocks"></a>Blocks solved since last retarget</h4></div>
+          <div class="column"><h4 class="add-top-padding"><a name="blocks"></a>Blocks solved in the last 48h</h4></div>
         </div>
         <div class="row">
           <div class="column">
@@ -171,30 +169,21 @@ Attributions:
       } finally {
         let searchParams = new URLSearchParams(window.location.search)
 
-        if(searchParams.has('reload')) {
-          var time = searchParams.get('reload');
-          setTimeout(function(){
-            location.reload()
-          },time*60000)
-        }
-
         if(!searchParams.has('page')
           || searchParams.get('page') == 'stats') {
           if(!searchParams.has('page')){
             addToURL('?page=stats&');
           }
           log('STATS selected');
-          $('#row-statistics').show(); // may not need this
-          $('#row-miners').show(); // may not need this
-          $('#row-blocks').show(); // may not need this
-          //$(document).attr("title", "0xBitcoin Statistics");
+          //$('#row-statistics').show(); // uncomment to show stats
+          $('#row-blocks').show();
           el('#statistics').innerHTML = '';
           updateAndDisplayAllStats();
         }else if(searchParams.get('page') == 'graphs') {
           log('GRAPHS selected');
           let days = 60;
           let points = 60;
-          $(document).attr("title", "Graphs - 0xBitcoin Statistics");
+          $(document).attr("title", "Graphs - COSMiC Explorer");
           if(searchParams.get('days')) {
             days = searchParams.get('days');
           }

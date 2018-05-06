@@ -55,30 +55,9 @@ var eth = new Eth(new Eth.HttpProvider("https://mainnet.infura.io/MnFOXCPE2oOhWp
 
 const token = eth.contract(tokenABI).at(_CONTRACT_ADDRESS);
 
-function goToURLAnchor() {
-  /* kind of a hack, after charts are loaded move to correct anchor. For some
-     reason the viewport is forced to the top when creating the charts */
-  if (window.location.hash.search('#difficulty') != -1) {
-    // this one isn't really necessary because diffigulty graph is at top of screen
-    //var targetOffset = $('#row-difficulty').offset().top;
-    //$('html, body').animate({scrollTop: targetOffset}, 500);
-  } else if (window.location.hash.search('#reward-time') != -1) {
-    var targetOffset = $('#row-reward-time').offset().top;
-    $('html, body').animate({scrollTop: targetOffset}, 500);
-  }else if (window.location.hash.search('#miners') != -1) {
-    var targetOffset = $('#row-miners').offset().top;
-    $('html, body').animate({scrollTop: targetOffset}, 500);
-  }else if (window.location.hash.search('#blocks') != -1) {
-    var targetOffset = $('#row-blocks').offset().top;
-    $('html, body').animate({scrollTop: targetOffset}, 500);
-  }
-}
-
 
 /* move fetching/storing stats into a class, even just to wrap it */
 stats = [
-  /*Description                     promise which retuns, or null         units         multiplier  null: filled in later*/
-  //['',                              null,                                 "",           1,          null     ], /* mining difficulty */
   ['Mining Difficulty',             token.getMiningDifficulty,            "",           1,          null     ], /* mining difficulty */
   ['Estimated Hashrate',            null,                                 "Mh/s",       1,          null     ], /* mining difficulty */
   ['Rewards Until Readjustment',    null,                                 "",           1,          null     ], /* mining difficulty */
@@ -86,24 +65,9 @@ stats = [
   ['Last Difficulty Start Block',   token.latestDifficultyPeriodStarted,  "",           1,          null     ], /* mining difficulty */
   ['Tokens Minted',                 token.tokensMinted,                   "0xBTC",      0.00000001, null     ], /* supply */
   ['Max Supply for Current Era',    token.maxSupplyForEra,                "0xBTC",      0.00000001, null     ], /* mining */
-  ['Supply Remaining in Era',       null,                                 "0xBTC",      0.00000001, null     ], /* mining */
   ['Last Eth Reward Block',         token.lastRewardEthBlockNumber,       "",           1,          null     ], /* mining */
   ['Last Eth Block',                eth.blockNumber,                      "",           1,          null     ], /* mining */
-  ['Current Reward Era',            token.rewardEra,                      "/ 39",       1,          null     ], /* mining */
-  ['Current Mining Reward',         token.getMiningReward,                "0xBTC",      0.00000001, null     ], /* mining */
   ['Epoch Count',                   token.epochCount,                     "",           1,          null     ], /* mining */
-  ['Total Supply',                  token.totalSupply,                    "0xBTC",      0.00000001, null     ], /* supply */
-  //['Mining Target',                 token.miningTarget,                   "",           1,          null     ], /* mining */
-  ['',                              null,                                 "",           1,          null     ], /* */
-  ['Token Holders',                 null,                                 "holders",    1,          null     ], /* usage */
-  ['Token Transfers',               null,                                 "transfers",  1,          null     ], /* usage */
-  ['Total Contract Operations',     null,                                 "txs",        1,          null     ], /* usage */
-  //['',                              null,                                 "0xBTC",      0.00000001, null     ], /* */
-  //['TokenMiningPool.com Hashrate',  null,                                 "Mh/s",       1,          null     ], /* pool */
-  //['0xBrute.com Hashrate',          null,                                 "Mh/s",       1,          null     ], /* pool */
-  //['0xPool.io Hashrate',            null,                                 "Mh/s",       1,          null     ], /* pool */
-  //['gpu.PiZzA Hashrate',            null,                                 "Mh/s",       1,          null     ], /* pool */
-  //['0xBTCpool.com Hashrate',        null,                                 "Mh/s",       1,          null     ], /* pool */
 ];
 
 var latest_eth_block = null;
@@ -288,49 +252,6 @@ function updateLastUpdatedTime() {
   el('#LastUpdatedTime').innerHTML = current_time;
 }
 
-function updateThirdPartyAPIs() {
-  /* ethplorer token info */
-  $.getJSON('https://api.ethplorer.io/getTokenInfo/0xb6ed7644c69416d67b522e20bc294a9a9b405b31?apiKey=freekey',
-    function(data) {
-      el('#TokenHolders').innerHTML = "<b>" + data["holdersCount"] + "</b> holders";
-      el('#TokenTransfers').innerHTML = "<b>" + data["transfersCount"] + "</b> transfers";
-  });
-  /* ethplorer contract address info */
-  $.getJSON('https://api.ethplorer.io/getAddressInfo/0xb6ed7644c69416d67b522e20bc294a9a9b405b31?apiKey=freekey',
-    function(data) {
-      el('#TotalContractOperations').innerHTML = "<b>" + data["countTxs"] + "</b> txs";
-  });
-}
-
-function showBlockDistributionPieChart(piechart_dataset, piechart_labels) {
-  //console.log('dataset', piechart_dataset);
-  el('#blockdistributionpiechart').innerHTML = '<canvas id="chart-block-distribution" width="2rem" height="2rem"></canvas>';
-
-  if(piechart_dataset.length == 0 || piechart_labels.length == 0) {
-    return;
-  }
-
-  //Chart.defaults.global.elements.arc.backgroundColor = 'rgba(255,0,0,1)';
-  Chart.defaults.global.elements.arc.borderColor = 'rgb(32, 34, 38)';
-  Chart.defaults.global.elements.arc.borderWidth = 3;
-
-  /* hashrate and difficulty chart */
-  var hr_diff_chart = new Chart(document.getElementById('chart-block-distribution').getContext('2d'), {
-    type: 'doughnut',
-
-    data: {
-        datasets: [piechart_dataset],
-        labels: piechart_labels,
-    },
-
-    options: {
-      legend: {
-        display: false,
-      },
-    },
-  });
-}
-
 function getMinerColor(address, known_miners) {
   function simpleHash(seed, string) {
     var h = seed;
@@ -375,7 +296,6 @@ function getMinerNameLinkHTML(address, known_miners) {
   return '<a href="' + address_url + '">' + poolstyle + readable_name + '</span></a>';
 }
 
-/* TODO use hours_into_past */
 function updateAllMinerInfo(eth, stats, hours_into_past){
 
   var known_miners = {
@@ -401,8 +321,7 @@ function updateAllMinerInfo(eth, stats, hours_into_past){
   var estimated_network_hashrate = getValueFromStats('Estimated Hashrate', stats)
   var last_difficulty_start_block = getValueFromStats('Last Difficulty Start Block', stats)
 
-  //var num_eth_blocks_to_search = hours_into_past * 60 * 60 / 15;
-  var num_eth_blocks_to_search = last_reward_eth_block - last_difficulty_start_block;
+  var num_eth_blocks_to_search = hours_into_past * 60 * 60 / 15;
   log("searching last", num_eth_blocks_to_search, "blocks");
 
   /* get all mint() transactions in the last N blocks */
@@ -444,21 +363,6 @@ function updateAllMinerInfo(eth, stats, hours_into_past){
 
         mined_blocks.push([block_number, tx_hash, miner_address, nonce])
       });
-
-      // log('tx_hash=', tx_hash);
-      // log('  block=', block_number);
-      // log('  miner=', miner_address)
-
-      if(!miner_list.includes(miner_address)){
-        miner_list.push(miner_address);
-      }
-
-
-      if(miner_block_count[miner_address] === undefined) {
-        miner_block_count[miner_address] = 1;
-      } else {
-        miner_block_count[miner_address] += 1;
-      }
     });
 
     while(mined_blocks.length < result.length) {
@@ -466,86 +370,14 @@ function updateAllMinerInfo(eth, stats, hours_into_past){
       await sleep(500);
     }
 
-    log("processed blocks:",
-      Object.keys(miner_block_count).length,
-      "unique miners");
+    /* sort the blocks by block number */
+    mined_blocks.sort((a, b) => {return b[0] - a[0];});
 
-    /* we will eventually show newest blocks first, so reverse the list */
-    mined_blocks.reverse();
 
-    /* collapse miner_block_count using known_miners who have multiple
-       address into a single address */
-    for(var m1 in miner_block_count) {
-      for(var m2 in miner_block_count) {
-        if(m1 === m2) {
-          continue;
-        }
-        if(known_miners[m1] !== undefined
-           && known_miners[m2] !== undefined
-           && known_miners[m1][0] == known_miners[m2][0]) {
-          miner_block_count[m1] += miner_block_count[m2];
-          miner_block_count[m2] = 0;
-        }
-      }
-    }
-
-    /* delete miners with zero blocks (due to collapse op above) */
-    Object.keys(miner_block_count).forEach((miner_addr) => {
-      if(miner_block_count[miner_addr] == 0) {
-        delete miner_block_count[miner_addr]
-      }
-    });
-
-    /* create sorted list of miners */
-    sorted_miner_block_count = []
-    for(var m in miner_block_count) {
-      sorted_miner_block_count.push([m, miner_block_count[m]]);
-    }
-    /* descending */
-    sorted_miner_block_count.sort((a, b) => {return b[1] - a[1];});
-
-    log('done sorting miner info');
-
-    /* fill in miner info */
-    var piechart_labels = [];
-    var piechart_dataset = {
-      data: [],
-      backgroundColor: [],
-      label: 'miner-data'
-    };
-    var innerhtml_buffer = '<tr><th>Miner</th><th>Block Count</th>'
-      + '<th>% of Total</th><th>Hashrate (Estimate)</th></tr>';
-    sorted_miner_block_count.forEach(function(miner_info) {
-      var addr = miner_info[0];
-      var blocks = miner_info[1];
-      var miner_name_link = getMinerNameLinkHTML(addr, known_miners);
-      var percent_of_total_blocks = blocks/total_block_count;
-
-      piechart_dataset.data.push(blocks);
-      piechart_dataset.backgroundColor.push(getMinerColor(addr, known_miners))
-      piechart_labels.push(getMinerName(addr, known_miners))
-
-      innerhtml_buffer += '<tr><td>'
-        + miner_name_link + '</td><td>'
-        + blocks + '</td><td>'
-        + (100*percent_of_total_blocks).toFixed(2) + '%' + '</td><td>'
-        + toReadableHashrate(percent_of_total_blocks*estimated_network_hashrate, false) + '</td></tr>';
-    });
-    /* add the last row (totals) */
-    innerhtml_buffer += '<tr><td style="border-bottom: 0rem;"></td><td style="border-bottom: 0rem;">'
-      + total_block_count + '</td><td style="border-bottom: 0rem;"></td><td style="border-bottom: 0rem;">'
-      + toReadableHashrate(estimated_network_hashrate, false) + '</td></tr>';
-    el('#minerstats').innerHTML = innerhtml_buffer;
-    log('done populating miner stats');
-    // $(window).hide().show(0);
-    // $(window).trigger('resize');
-
-    showBlockDistributionPieChart(piechart_dataset, piechart_labels);
 
     var blocks_since_last_reward = current_eth_block - last_reward_eth_block;
     var date_now = new Date();
     var date_of_last_mint = new Date(date_now.getTime() - blocks_since_last_reward*15*1000)
-
     function get_date_from_eth_block(eth_block) {
       /* TODO: use web3 instead, its probably more accurate */
       /* blockDate = new Date(web3.eth.getBlock(startBlock-i+1).timestamp*1000); */
@@ -554,12 +386,13 @@ function updateAllMinerInfo(eth, stats, hours_into_past){
 
     /* fill in block info */
     var dt = new Date();
-    var innerhtml_buffer = '<tr><th>Time (Approx)</th><th>Eth Block #</th>'
-      + '<th>Transaction Hash</th><th>Miner</th></tr>';
+    var innerhtml_buffer = '<tr><th>Time (Approx)</th>'
+      + '<th>Tx Hash</th><th>Nonce</th><th>Miner</th></tr>';
     mined_blocks.forEach(function(block_info) {
       var eth_block = parseInt(block_info[0]);
       var tx_hash = block_info[1];
       var addr = block_info[2];
+      var nonce = block_info[3];
 
       var miner_name_link = getMinerNameLinkHTML(addr, known_miners);
 
@@ -570,16 +403,14 @@ function updateAllMinerInfo(eth, stats, hours_into_past){
 
       innerhtml_buffer  += '<tr><td>'
         + get_date_from_eth_block(eth_block) + '</td><td>'
-        + '<a href="' + block_url + '">' + eth_block + '</td><td>'
         + '<a href="' + transaction_url + '" title="' + tx_hash + '">'
-        + tx_hash.substr(0, 16) + '...</a></td><td align="right" style="text-overflow:ellipsis;white-space: nowrap;overflow: hidden;">'
+        + tx_hash.substr(0, 8) + '...</a></td><td align="right" style="text-overflow:ellipsis;white-space: nowrap;overflow: hidden;">'
+        + nonce + '</td><td>'
         + miner_name_link + '</td></tr>';
         //+ '</a></td></tr>';
     });
     el('#blockstats').innerHTML = innerhtml_buffer;
     log('done populating block stats');
-
-    goToURLAnchor();
   })
   .catch((error) => {
     log('error filtering txs:', error);
@@ -658,10 +489,7 @@ function updateStatsTable(stats){
         /* once we have grabbed all stats, update the calculated ones */
         if(areAllBlockchainStatsLoaded(stats)) {
           updateStatsThatHaveDependencies(stats);
-          /* hack: check if miner table exists - if it doesn't then skip loading blocks */
-          if(el('#minerstats')) {
-            setTimeout(()=>{updateAllMinerInfo(eth, stats, 24)}, 0);
-          }
+          setTimeout(()=>{updateAllMinerInfo(eth, stats, 48)}, 0);
         }
       }
     }
@@ -670,20 +498,12 @@ function updateStatsTable(stats){
       stat_function().then(set_value(stats, stat_name, stat_unit, stat_multiplier, (value) => {stat[4]=value}));
     }
   });
-
-  /* hack: check if stat table exists - if it doesn't then skip api updates */
-  if(el('#TokenHolders')) {
-    updateThirdPartyAPIs();
-  }
 }
 
-function loadAllStats() {
-  updateStatsTable(stats);
-}
 
 function updateAndDisplayAllStats() {
   createStatsTable();
-  loadAllStats();
+  updateStatsTable(stats);
 }
 
 
