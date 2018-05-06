@@ -386,8 +386,7 @@ function updateAllMinerInfo(eth, stats, hours_into_past){
 
     /* fill in block info */
     var dt = new Date();
-    var innerhtml_buffer = '<tr><th>Time (Approx)</th>'
-      + '<th>Tx Hash</th><th>Nonce</th><th>Miner</th></tr>';
+    var innerhtml_buffer = '<tr><th>Time (Approx)</th><th>Nonce</th><th>Miner</th></tr>';
     mined_blocks.forEach(function(block_info) {
       var eth_block = parseInt(block_info[0]);
       var tx_hash = block_info[1];
@@ -397,17 +396,15 @@ function updateAllMinerInfo(eth, stats, hours_into_past){
       var miner_name_link = getMinerNameLinkHTML(addr, known_miners);
 
       var transaction_url = 'https://etherscan.io/tx/' + tx_hash;
-      var block_url = 'https://etherscan.io/block/' + eth_block;
 
       //log('hexcolor:', hexcolor, address_url);
 
       innerhtml_buffer  += '<tr><td>'
-        + get_date_from_eth_block(eth_block) + '</td><td>'
         + '<a href="' + transaction_url + '" title="' + tx_hash + '">'
-        + tx_hash.substr(0, 8) + '...</a></td><td align="right" style="text-overflow:ellipsis;white-space: nowrap;overflow: hidden;">'
+        + get_date_from_eth_block(eth_block)
+        + '</a></td><td align="right" style="font-family: Monospace;">'
         + nonce + '</td><td>'
         + miner_name_link + '</td></tr>';
-        //+ '</a></td></tr>';
     });
     el('#blockstats').innerHTML = innerhtml_buffer;
     log('done populating block stats');
@@ -415,8 +412,6 @@ function updateAllMinerInfo(eth, stats, hours_into_past){
   .catch((error) => {
     log('error filtering txs:', error);
   });
-
-
 }
 
 function createStatsTable(){
